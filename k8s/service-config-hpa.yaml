@@ -1,0 +1,45 @@
+# Config the app reads via env. Same keys as config.py, pointing at the
+# in-cluster service names "db" and "redis" - the same trick as docker-compose,
+# just Kubernetes DNS instead of Compose DNS.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-auth-config
+data:
+  DATABASE_URL: "postgresql+psycopg2://postgres:postgres@db:5432/payments"
+  REDIS_URL: "redis://redis:6379/0"
+  MAX_AMOUNT: "5000"
+  VELOCITY_WINDOW_SECONDS: "60"
+  MAX_TXNS_PER_WINDOW: "5"
+---
+# ClusterIP (internal only) - I reach it with port-forward, NOT a LoadBalancer,
+# so there's no AWS load balancer to orphan and block terraform destroy later.
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-auth
+spec:
+  selector: { app: payment-auth }
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+# Horizontal Pod Autoscaler: scale 2->6 pods when average CPU passes 70%.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: payment-auth
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: payment-auth
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

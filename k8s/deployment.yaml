@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: payment-auth }
+  template:
+    metadata:
+      labels: { app: payment-auth }
+    spec:
+      containers:
+        - name: payment-auth
+          image: 464535293192.dkr.ecr.eu-west-1.amazonaws.com/payment-auth
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: payment-auth-config
+          # Requests = what the scheduler reserves; limits = the hard ceiling.
+          # The HPA measures CPU against the request, so this must be set for it to work.
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+          # Liveness: restart the pod if the process wedges.
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Readiness: only send traffic once Redis is reachable.
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10

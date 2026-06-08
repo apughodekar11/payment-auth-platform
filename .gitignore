@@ -1,6 +1,23 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+
+# Terraform
 .terraform/
-*.tfstate*
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
+# Ansible / EC2 secrets - NEVER commit these
+*.pem
+infra/ansible/*.pem
+inventory.ini
+
+# Env / local config
 .env
+*.env
+
+# OS noise
+.DS_Store

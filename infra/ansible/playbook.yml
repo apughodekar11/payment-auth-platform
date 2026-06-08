@@ -1,0 +1,116 @@
+# Provisions the Jenkins CI host: docker, kubectl, aws-cli, python, and Jenkins
+# Every task is idempotent - running this twice on an already-configured
+---
+- name: Configure Jenkins CI host
+  hosts: jenkins
+  become: true   # run as root via sudo
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600   # skip if updated in the last hour - keeps it idempotent
+
+    - name: Install base packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - unzip
+          - curl
+          - ca-certificates
+          - openjdk-21-jre   
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker is running and enabled on boot
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: true   # append, don't replace their other groups
+
+    - name: Install kubectl
+      get_url:
+        url: https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+      # get_url is idempotent: if the file already exists with that content it won't re-download
+
+    - name: Download AWS CLI installer
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+        mode: "0644"
+
+    - name: Unzip AWS CLI installer
+      unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp/
+        remote_src: true
+        creates: /tmp/aws   # don't re-unzip if already done
+
+    - name: Install AWS CLI
+      command: /tmp/aws/install
+      args:
+        creates: /usr/local/bin/aws   # the 'creates' makes this command idempotent
+
+    - name: Remove any stale Jenkins repo file
+      file:
+        path: /etc/apt/sources.list.d/jenkins.list
+        state: absent
+
+    - name: Remove any stale Jenkins keyrings
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /usr/share/keyrings/jenkins-keyring.gpg
+        - /usr/share/keyrings/jenkins-keyring.asc
+
+    - name: Download Jenkins signing key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /tmp/jenkins.key
+        mode: "0644"
+        force: true
+
+    - name: Dearmor the Jenkins key
+      command: gpg --batch --yes --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg /tmp/jenkins.key
+
+    - name: Add Jenkins apt repository using copy module
+      copy:
+        content: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/\n"
+        dest: /etc/apt/sources.list.d/jenkins.list
+        mode: "0644"
+
+    - name: Hard purge apt cache directories to clear bad memory
+      shell: "rm -rf /var/lib/apt/lists/*"
+      changed_when: true     
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+        update_cache: true
+
+    - name: Add jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: true
+
+    - name: Ensure Jenkins is running and enabled
+      service:
+        name: jenkins
+        state: started
+        enabled: true
