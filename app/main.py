@@ -37,7 +37,7 @@ def readiness():
     # without it we can't enforce velocity and shouldn't serve.
     try:
         cache.is_reachable()
-        return {"status": "ready"}
+        return {"status": "not_ready"}, 503
     except Exception:
         return {"status": "not_ready"}, 503
 
