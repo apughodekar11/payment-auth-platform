@@ -16,7 +16,7 @@ def test_normal_transaction_is_approved():
 
 def test_blocked_card_is_declined():
     verdict = evaluate_transaction(TransactionFacts(amount=100, recent_transaction_count=1, is_blocked=True), **LIMITS)
-    assert verdict.decision == Decision.DECLINE
+    assert verdict.decision == Decision.REJECT
     assert verdict.reason == "card_blocklisted"
 
 
