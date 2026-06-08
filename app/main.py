@@ -35,10 +35,7 @@ def liveness():
 def readiness():
     # Readiness: should we receive traffic? Here we DO check Redis, because
     # without it we can't enforce velocity and shouldn't serve.
-    try:
         cache.is_reachable()
-        return {"status": "not_ready"}, 503
-    except Exception:
         return {"status": "not_ready"}, 503
 
 
