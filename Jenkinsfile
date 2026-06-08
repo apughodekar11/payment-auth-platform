@@ -46,11 +46,24 @@ pipeline {
             // Hit the service through a temporary port-forward and confirm it answers.
             steps {
                 sh '''
-                    kubectl port-forward svc/payment-auth 18080:80 &
+                    # Start port-forward in background, capture its PID, and make sure
+                    # we always kill it even if the curl fails (trap on EXIT).
+                    kubectl port-forward svc/payment-auth 18080:80 > /tmp/pf.log 2>&1 &
                     PF_PID=$!
-                    sleep 5
-                    curl -fsS localhost:18080/healthz
-                    kill $PF_PID
+                    trap "kill $PF_PID 2>/dev/null || true" EXIT
+
+                    # Wait until the port actually answers, up to ~20s, instead of a blind sleep.
+                    for i in $(seq 1 20); do
+                        if curl -fsS localhost:18080/healthz 2>/dev/null; then
+                            echo "smoke test passed"
+                            exit 0
+                        fi
+                        sleep 1
+                    done
+
+                    echo "smoke test failed - service did not respond"
+                    cat /tmp/pf.log
+                    exit 1
                 '''
             }
         }
