@@ -17,7 +17,7 @@ def test_normal_transaction_is_approved():
 def test_blocked_card_is_declined():
     verdict = evaluate_transaction(TransactionFacts(amount=100, recent_transaction_count=1, is_blocked=True), **LIMITS)
     assert verdict.decision == Decision.REJECT
-    assert verdict.reason == "card_blocklisted"
+    assert verdict.reason == "card_blocked"      
 
 
 def test_amount_over_threshold_is_declined():
@@ -33,7 +33,7 @@ def test_amount_exactly_at_threshold_is_approved():
 
 def test_velocity_over_limit_is_declined():
     verdict = evaluate_transaction(TransactionFacts(amount=100, recent_transaction_count=6, is_blocked=False), **LIMITS)
-    assert verdict.reason == "velocity_exceeded"
+    assert verdict.reason == "velocity_limit_exceeded" 
 
 
 def test_velocity_exactly_at_limit_is_approved():
@@ -43,4 +43,4 @@ def test_velocity_exactly_at_limit_is_approved():
 
 def test_blocked_card_beats_amount_rule():
     verdict = evaluate_transaction(TransactionFacts(amount=9999, recent_transaction_count=1, is_blocked=True), **LIMITS)
-    assert verdict.reason == "card_blocklisted"
+    assert verdict.reason == "card_blocked"      
