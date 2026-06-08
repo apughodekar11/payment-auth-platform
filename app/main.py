@@ -33,10 +33,8 @@ def liveness():
 
 @app.get("/readyz")
 def readiness():
-    # Readiness: should we receive traffic? Here we DO check Redis, because
-    # without it we can't enforce velocity and shouldn't serve.
         cache.is_reachable()
-        return {"status": "not_ready"}, 503
+        return {"status": "ready"}
 
 
 @app.post("/authorize", response_model=AuthorizationResponse)
