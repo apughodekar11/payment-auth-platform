@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from app.config import settings
 from app.models import AuthorizationRequest, AuthorizationResponse
 from app.decision_engine import TransactionFacts, evaluate, evaluate_transaction    
+from app.telemetry import setup_telemetry 
 from app import cache, db
 
 app = FastAPI(title=settings.service_name)
@@ -22,6 +23,7 @@ logger = logging.getLogger("payment-auth")
 @app.on_event("startup")
 def on_startup():
     db.create_tables()
+    setup_telemetry(app) 
 
 
 @app.get("/healthz")

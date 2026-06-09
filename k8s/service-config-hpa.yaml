@@ -11,7 +11,12 @@ data:
   MAX_AMOUNT: "5000"
   VELOCITY_WINDOW_SECONDS: "60"
   MAX_TXNS_PER_WINDOW: "5"
+  OTEL_ENABLED: "true"
+  OTEL_ENDPOINT: "https://trs55786.apps.dynatrace.com/api/v2/otlp/v1/traces"
+  OTEL_HEADERS: "Authorization=Api-Token dt0c01.PLACEHOLDER_TOKEN_VALUE"
+  SERVICE_NAME: payment-auth,
 ---
+
 # ClusterIP (internal only) - I reach it with port-forward, NOT a LoadBalancer,
 # so there's no AWS load balancer to orphan and block terraform destroy later.
 apiVersion: v1
