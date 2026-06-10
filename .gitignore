@@ -21,3 +21,5 @@ inventory.ini
 
 # OS noise
 .DS_Store
+.dynatoken
+clean.sh

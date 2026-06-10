@@ -13,6 +13,8 @@ spec:
       containers:
         - name: payment-auth
           image: 464535293192.dkr.ecr.eu-west-1.amazonaws.com/payment-auth
+          command: ["opentelemetry-instrument"]
+          args: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
           ports:
             - containerPort: 8000
           envFrom:
