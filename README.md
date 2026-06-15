@@ -14,7 +14,7 @@ Terraform · Kubernetes · Jenkins · Ansible · OpenTelemetry · Dynatrace
 > **Note on cloud resources:** the AWS infrastructure (EKS, VPC, NAT, ECR) is
 > provisioned via Terraform and torn down after each working session to control
 > cost. The repository contains everything needed to recreate it with a single
-> `terraform apply`. Screenshots of the running system are in [`/docs`](./docs).
+> `terraform apply`. 
 
 ---
 
